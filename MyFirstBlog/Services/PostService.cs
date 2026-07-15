@@ -2,13 +2,13 @@ namespace MyFirstBlog.Services;
 
 using MyFirstBlog.Helpers;
 using MyFirstBlog.Entities;
-using System.Text.RegularExpressions;
 using MyFirstBlog.Dtos;
 
 public interface IPostService
 {
     IEnumerable<PostDto> GetPosts();
-    PostDto GetPost(String slug);
+    PostDto GetPost(string slug);
+    PostDto CreatePost(CreatePostDto request);
 }
 
 public class PostService : IPostService
@@ -30,8 +30,35 @@ public class PostService : IPostService
         return getPost(slug).AsDto();
     }
 
+    public PostDto CreatePost(CreatePostDto request)
+    {
+        var post = new Post
+        {
+            Id = Guid.NewGuid(),
+            Title = request.Title,
+            Slug = CreateSlug(request.Title),
+            Body = request.Description,
+            CreatedDate = DateTime.UtcNow
+        };
+
+        _context.Posts.Add(post);
+        _context.SaveChanges();
+
+        return post.AsDto();
+    }
+
     private Post getPost(string slug)
     {
-        return _context.Posts.Where(a=>a.Slug==slug.ToString()).SingleOrDefault();
+        return _context.Posts
+            .Where(a => a.Slug == slug.ToString())
+            .SingleOrDefault();
+    }
+
+    private string CreateSlug(string title)
+    {
+        return title
+            .Trim()
+            .ToLower()
+            .Replace(" ", "-");
     }
 }

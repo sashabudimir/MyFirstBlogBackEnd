@@ -6,29 +6,57 @@ using MyFirstBlog.Services;
 
 [ApiController]
 [Route("posts")]
-
-public class PostsController : ControllerBase {
+public class PostsController : ControllerBase
+{
     private IPostService _postService;
 
-    public PostsController(IPostService postService) {
+    public PostsController(IPostService postService)
+    {
         _postService = postService;
     }
 
-    // Get /posts
+    // GET /posts
     [HttpGet]
-    public IEnumerable<PostDto> GetPosts() {
+    public IEnumerable<PostDto> GetPosts()
+    {
         return _postService.GetPosts();
     }
 
-    // Get /posts/:slug
+    // GET /posts/{slug}
     [HttpGet("{slug}")]
-    public ActionResult<PostDto> GetPost(string slug) {
+    public ActionResult<PostDto> GetPost(string slug)
+    {
         var post = _postService.GetPost(slug);
 
-        if (post is null) {
+        if (post is null)
+        {
             return NotFound();
         }
 
         return post;
+    }
+
+    // POST /posts
+    [HttpPost]
+    public ActionResult<object> CreatePost([FromBody] CreatePostDto request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Title))
+        {
+            return BadRequest(new
+            {
+                errors = new[] { "Title cannot be blank" }
+            });
+        }
+
+        var post = _postService.CreatePost(request);
+
+        return Created($"/posts/{post.Slug}", new
+        {
+            post = new
+            {
+                title = post.Title,
+                description = post.Body
+            }
+        });
     }
 }
